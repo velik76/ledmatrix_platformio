@@ -5,17 +5,12 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#include "led_matrix_main.h"
-
 #define NETWORK_SSID "Velik1"
 #define NETWORK_PASS ""
 #define MAX_TRYING_TO_SETUP_CONNECTION 20
 
 // Set web server port number to 80
 WiFiServer server(80);
-
-// Variable to store the HTTP request
-String header;
 
 // Auxiliar variables to store the current output state
 String ledState = "off";
@@ -27,8 +22,11 @@ const int ledOutput = 2;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, 3600);
 
+#define DEBUG(C) // C
+
 Wifi::Wifi(LedMatrix* ledMatrix)
-    : _ledMatrix{ledMatrix}
+    : _ledMatrix{ledMatrix},
+      _activeLedMatrixPatterns{_ledMatrix->getActivePatterns()}
 {
 }
 
@@ -75,9 +73,9 @@ void Wifi::http()
     WiFiClient client = server.accept(); // Listen for incoming clients
 
     if(client)
-    {                                  // If a new client connects,
-        Serial.println("New Client."); // print a message out in the serial port
-        String currentLine = "";       // make a String to hold incoming data from the client
+    {                                         // If a new client connects,
+        DEBUG(Serial.println("New Client.")); // print a message out in the serial port
+        String currentLine = "";              // make a String to hold incoming data from the client
         currentTime = millis();
         previousTime = currentTime;
         while(client.connected() && currentTime - previousTime <= timeoutTime)
@@ -86,16 +84,16 @@ void Wifi::http()
             if(client.available())
             {                           // if there's bytes to read from the client,
                 char c = client.read(); // read a byte, then
-                Serial.write(c);        // print it out the serial monitor
-                header += c;
+                DEBUG(Serial.write(c)); // print it out the serial monitor
+                _header += c;
                 if(c == '\n')
                 { // if the byte is a newline character
                     // if the current line is blank, you got two newline characters in a row.
                     // that's the end of the client HTTP request, so send a response:
                     if(currentLine.length() == 0)
                     {
-                        Serial.print("Header: ");
-                        Serial.println(header);
+                        DEBUG(Serial.print("Header: ");
+                              Serial.println(_header);)
 
                         // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
                         // and a content-type so the client knows what's coming, then a blank line:
@@ -105,22 +103,34 @@ void Wifi::http()
                         client.println();
 
                         // turns the LED on and off
-                        if(header.indexOf("GET /led/on") >= 0)
+                        if(_header.indexOf("GET /led-on") >= 0)
                         {
-                            Serial.println("LED on");
+                            DEBUG(Serial.println("LED on");)
                             ledState = "on";
                             digitalWrite(ledOutput, HIGH);
                         }
-                        else if(header.indexOf("GET /led/off") >= 0)
+                        else if(_header.indexOf("GET /led-off") >= 0)
                         {
-                            Serial.println("LED off");
+                            DEBUG(Serial.println("LED off");)
                             ledState = "off";
                             digitalWrite(ledOutput, LOW);
                         }
-                        else if(header.indexOf("GET /nextEffect") >= 0)
+                        else if(_header.indexOf("GET /nextEffect") >= 0)
                         {
-                            Serial.println("Switching to next effect");
+                            DEBUG(Serial.println("Switching to next effect");)
                             _ledMatrix->switchToNextEnabledPattern();
+                        }
+                        else
+                        {
+                            for(const auto& v : _activeLedMatrixPatterns)
+                            {
+                                if(_header.indexOf(String{"GET /"} + v.second) >= 0)
+                                {
+                                    _ledMatrix->switchToPattern(v.first);
+                                    DEBUG(Serial.println("Switching to: " + v.second);)
+                                    break;
+                                }
+                            }
                         }
 
                         // Display the HTML web page
@@ -145,49 +155,34 @@ void Wifi::http()
                         // If the ledState is off, it displays the ON button
                         if(ledState == "off")
                         {
-                            client.println("<p><a href=\"/led/on\"><button class=\"button\">ON</button></a></p>");
+                            client.println("<p><a href=\"/led-on\"><button class=\"button\">ON</button></a></p>");
                         }
                         else
                         {
-                            client.println("<p><a href=\"/led/off\"><button class=\"button2\">OFF</button></a></p>");
+                            client.println("<p><a href=\"/led-off\"><button class=\"button2\">OFF</button></a></p>");
                         }
 
-                        client.println("<p>Matrix effect: " + _ledMatrix->getPatternName() + "</p>");
+                        // Horizontal line
+                        client.println("<hr style=\"height:2px;width:75%;border-width:0;color:gray;background-color:gray\">");
+
+                        client.println("<p>Matrix effect: " + _ledMatrix->getActivePatternName() + "</p>");
                         client.println("<p><a href=\"/nextEffect\"><button class=\"button\">Next effect</button></a></p>");
 
-                        client.println("<p>");
-                        client.println("<label for=\"effects\">Choose effect:</label>");
-                        client.println("<select id=\"effects\" name=\"effects\" onchange=\"testSelect2()\">");
-                        client.println("<option value=\"volvo\">Volvo</option>");
-                        client.println("<option value=\"audi\">Audi</option>");
+                        client.println("<select name=\"led_effect\" id=\"led_effect\" onchange=\"window.location.href=this.value;\">");
+
+                        for(const auto& v : _activeLedMatrixPatterns)
+                        {
+                            if(v.first == _ledMatrix->getActivePattern())
+                            {
+                                DEBUG(Serial.println("Selected: " + v.second));
+                                client.println("<option value=\"" + v.second + "\" selected>" + v.second + "</option>");
+                            }
+                            else
+                                client.println("<option value=\"" + v.second + "\">" + v.second + "</option>");
+                        }
+
                         client.println("</select>");
-                        client.println("<button onclick=\"testSelect()\">Test select</button>");
-                        client.println("<p>");
-                        client.println("<button id=\"switchEffect\" class=\"button\" onclick=\"window.location.href=\'/nextEffect\'\">Switch effect</button>");
-                        client.println("</p>");
-                        client.println("<script>");
-                        client.println("function testSelect() {");
-                        client.println("console.log(\"testSelect()!\");");
-                        client.println("document.getElementById(\"demo\").innerHTML = document.getElementById(\"effects\").value ;");
-                        client.println("}");
-                        client.println("</script>");
-
-                        client.println("<script>");
-                        client.println("function testSelect2() {");
-                        client.println("console.log(\"testSelect2()!\");");
-                        client.println("document.getElementById(\"switchEffect\").onclick=\"window.location.href=\'/led/off\'\";");
-                        client.println("}");
-                        client.println("</script>");
-
-                        client.println("<button onclick=\"myFunction()\">Click me</button>");
-                        client.println("<p id=\"demo\"></p>");
-
-                        client.println("<script>");
-                        client.println("function myFunction() {");
-                        client.println("document.getElementById(\"demo\").innerHTML = \"Hello World\";");
-                        client.println("}");
-                        client.println("</script>");
-
+                        client.println("");
                         client.println("</body></html>");
 
                         // The HTTP response ends with another blank line
@@ -207,11 +202,11 @@ void Wifi::http()
             }
         }
         // Clear the header variable
-        header = "";
+        _header = "";
         // Close the connection
         client.stop();
-        Serial.println("Client disconnected.");
-        Serial.println("");
+        DEBUG(Serial.println("Client disconnected.");
+              Serial.println("");)
     }
 #endif
 }
@@ -232,6 +227,10 @@ String Wifi::getIpAddress()
 
 bool Wifi::getNtpTime(int& h, int& m, int& s)
 {
+    h = 0;
+    m = 0;
+    s = 0;
+
     if(isConnected())
     {
         h = timeClient.getHours();
@@ -239,9 +238,6 @@ bool Wifi::getNtpTime(int& h, int& m, int& s)
         s = timeClient.getSeconds();
         return true;
     }
-    h = 0;
-    m = 0;
-    s = 0;
     return false;
 }
 
@@ -260,6 +256,7 @@ String Wifi::getNtpTime()
 
 void Wifi::setupWiFi()
 {
+    Serial.println("Setting up WiFi");
     if(String(NETWORK_PASS) == "")
     {
         Serial.println("No WiFi password defined in: NETWORK_SSID. Skip WiFi setup");
@@ -301,7 +298,5 @@ void Wifi::setupWiFi()
 void Wifi::loopWifi()
 {
     if(WiFi.status() == WL_CONNECTED)
-    {
         http();
-    }
 }

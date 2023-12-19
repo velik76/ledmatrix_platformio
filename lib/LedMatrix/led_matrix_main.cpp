@@ -141,6 +141,7 @@ bool LedMatrix::isPatternActive(const DrawingPattern pattern)
         case DrawingPattern::GameMaze:
             break;
         case DrawingPattern::GameSnake:
+            result = true;
             break;
         case DrawingPattern::ImageMario:
             result = true;
@@ -479,7 +480,7 @@ void LedMatrix::switchToPattern(DrawingPattern pattern)
         default:
             break;
     }
-    Serial.println(getPatternName());
+    Serial.println(getActivePatternName());
 }
 
 enum LedMatrix::DrawingPattern LedMatrix::getActivePattern() const
@@ -487,7 +488,7 @@ enum LedMatrix::DrawingPattern LedMatrix::getActivePattern() const
     return _drawState;
 }
 
-String LedMatrix::getPatternName()
+String LedMatrix::getActivePatternName()
 {
     return _patternNames[_drawState];
 }
@@ -499,4 +500,18 @@ void LedMatrix::setRunningText(const String& text)
         runningStringSetText(text);
         _runningText = text;
     }
+}
+
+LedMatrix::Patterns LedMatrix::getActivePatterns()
+{
+    Patterns result;
+
+    for(int i = 0; i < static_cast<int>(DrawingPattern::Last); i++)
+    {
+        auto patternId = static_cast<DrawingPattern>(i);
+        if(isPatternActive(patternId))
+            result.emplace_back(LedMatrix::Pattern(patternId, _patternNames[patternId]));
+    }
+
+    return result;
 }

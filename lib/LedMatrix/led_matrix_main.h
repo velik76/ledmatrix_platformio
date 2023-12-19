@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <vector>
 
 #include "timer.h"
 class LedMatrix
@@ -41,6 +42,9 @@ public:
         Last
     };
 
+    using Pattern = std::pair<DrawingPattern, String>;
+    using Patterns = std::vector<Pattern>;
+
     LedMatrix();
     void setup();
     void loop();
@@ -48,8 +52,9 @@ public:
     void switchToPattern(DrawingPattern pattern);
     void switchToRandomEnabledPattern();
     enum DrawingPattern getActivePattern() const;
-    String getPatternName();
+    String getActivePatternName();
     void setRunningText(const String& text);
+    Patterns getActivePatterns();
 
 private:
     bool isPatternActive(const DrawingPattern pattern);

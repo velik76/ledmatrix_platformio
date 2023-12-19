@@ -1,7 +1,7 @@
 #pragma once
 #include "WString.h"
+#include "led_matrix_main.h"
 
-class LedMatrix;
 class Wifi
 {
 private:
@@ -20,4 +20,7 @@ public:
 
 private:
     LedMatrix* _ledMatrix{nullptr};
+    LedMatrix::Patterns _activeLedMatrixPatterns;
+    // Variable to store the HTTP request
+    String _header{};
 };
