@@ -19,12 +19,6 @@
 #include "noise_effects.h"
 #include "running_text.h"
 
-#define LED_TYPE WS2812
-#define COLOR_ORDER GRB
-#define DATA_PIN 27
-#define VOLTS 5
-#define MAX_MA 8000
-
 CRGBArray<NUM_LEDS> leds;
 
 LedMatrix::LedMatrix()
@@ -66,7 +60,7 @@ LedMatrix::LedMatrix()
 void LedMatrix::setup()
 {
     FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MA);
-    FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<LED_TYPE, LED_MATRIX_LED_MATRIX_GPIO, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.clear();
     FastLED.show();
