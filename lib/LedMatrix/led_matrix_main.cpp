@@ -19,12 +19,6 @@
 #include "noise_effects.h"
 #include "running_text.h"
 
-#define LED_TYPE WS2812
-#define COLOR_ORDER GRB
-#define DATA_PIN 27
-#define VOLTS 5
-#define MAX_MA 8000
-
 CRGBArray<NUM_LEDS> leds;
 
 LedMatrix::LedMatrix()
@@ -66,7 +60,7 @@ LedMatrix::LedMatrix()
 void LedMatrix::setup()
 {
     FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MA);
-    FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<LED_TYPE, LED_MATRIX_LED_MATRIX_GPIO, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
     FastLED.setBrightness(BRIGHTNESS);
     FastLED.clear();
     FastLED.show();
@@ -141,6 +135,7 @@ bool LedMatrix::isPatternActive(const DrawingPattern pattern)
         case DrawingPattern::GameMaze:
             break;
         case DrawingPattern::GameSnake:
+            result = true;
             break;
         case DrawingPattern::ImageMario:
             result = true;
@@ -479,7 +474,7 @@ void LedMatrix::switchToPattern(DrawingPattern pattern)
         default:
             break;
     }
-    Serial.println(getPatternName());
+    Serial.println(getActivePatternName());
 }
 
 enum LedMatrix::DrawingPattern LedMatrix::getActivePattern() const
@@ -487,7 +482,7 @@ enum LedMatrix::DrawingPattern LedMatrix::getActivePattern() const
     return _drawState;
 }
 
-String LedMatrix::getPatternName()
+String LedMatrix::getActivePatternName()
 {
     return _patternNames[_drawState];
 }
@@ -499,4 +494,18 @@ void LedMatrix::setRunningText(const String& text)
         runningStringSetText(text);
         _runningText = text;
     }
+}
+
+LedMatrix::Patterns LedMatrix::getActivePatterns()
+{
+    Patterns result;
+
+    for(int i = 0; i < static_cast<int>(DrawingPattern::Last); i++)
+    {
+        auto patternId = static_cast<DrawingPattern>(i);
+        if(isPatternActive(patternId))
+            result.emplace_back(LedMatrix::Pattern(patternId, _patternNames[patternId]));
+    }
+
+    return result;
 }

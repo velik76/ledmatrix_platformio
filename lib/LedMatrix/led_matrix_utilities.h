@@ -8,6 +8,12 @@
 #define NUM_LEDS (WIDTH * HEIGHT)
 #define BRIGHTNESS 100 // (0-255)
 
+#define LED_TYPE WS2812
+#define COLOR_ORDER GRB
+#define LED_MATRIX_LED_MATRIX_GPIO 27
+#define VOLTS 5
+#define MAX_MA 8000
+
 #define SCORE_SIZE 0                // размер символов счёта в игре. 0 - маленький для 8х8 (шрифт 3х5), 1 - большой (шрифт 5х7)
 #define GLOBAL_COLOR_1 CRGB::Green  // основной цвет №1 для игр
 #define GLOBAL_COLOR_2 CRGB::Orange // основной цвет №2 для игр
