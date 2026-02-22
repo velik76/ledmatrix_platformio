@@ -1,4 +1,9 @@
-# ledmatrix_platformio
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+  - [Summary](#summary)
+  - [HW connection](#hw-connection)
+  - [Hardware](#hardware)
 
 ## Summary
 
@@ -12,7 +17,7 @@
   - to next using button
   - free selection via simple web interface:
 
-<p style="text-align: center;"><img src="./docs/Web_Top.png" alt="drawing" width="800"/></p>
+![web](./docs/Web_Top.png)
 
 ## HW connection
 
@@ -23,3 +28,27 @@
 | LED matrix | GPIO27            | LED_MATRIX_GPIO |
 | RTC SCL    | GPIO22            |                 |
 | RTC SDA    | GPIO21            |                 |
+
+## Hardware
+
+Pinout of used ESP32 module from AzDelivery:
+
+![ESP32](./docs/ESP32_Module.png)
+
+![ESP32](./docs/ESP32_Pinout.png)
+
+Pinout of used RTC module:
+
+![ESP32](./docs/RTC_Module.png)
+
+Shematic created using kicad. Screenshot of it:
+
+![Shematic](./docs/Schematic.png)
+
+Layout diagram:
+
+![Layout](./docs/Layout.png)
+
+Board:
+
+![Board](./docs/Board.jpg)
