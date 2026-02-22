@@ -2,7 +2,10 @@
     // See http://go.microsoft.com/fwlink/?LinkId=827846
     // for the documentation about the extensions.json format
     "recommendations": [
-        "platformio.platformio-ide"
+        "cweijan.vscode-office",
+        "davidanson.vscode-markdownlint",
+        "platformio.platformio-ide",
+        "shd101wyy.markdown-preview-enhanced"
     ],
     "unwantedRecommendations": [
         "ms-vscode.cpptools-extension-pack"
